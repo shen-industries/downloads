@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shen — a research IDE for scientists</title>
+<meta name="description" content="Shen is a local-first research app for scientists: your Zotero library, an editor, and an AI assistant that answers from your own papers.">
+
+<style>
+  /* Light is the base; only the tokens change in dark. Nothing gets its sole
+     definition inside the media query. */
+  :root {
+    --bg: #fbfbfa;
+    --surface: #ffffff;
+    --border: #e4e4e1;
+    --text: #1a1a18;
+    --muted: #6b6b66;
+    --accent: #2f6f4e;
+    --accent-text: #ffffff;
+    --code-bg: #f2f2ef;
+    --warn-bg: #fdf6e3;
+    --warn-border: #e8d9a8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17171a;
+      --surface: #1e1e22;
+      --border: #2e2e34;
+      --text: #e8e8e6;
+      --muted: #9a9a95;
+      --accent: #4c9c72;
+      --accent-text: #0f0f11;
+      --code-bg: #131316;
+      --warn-bg: #241f14;
+      --warn-border: #4a3f24;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 62rem; margin: 0 auto; padding: 0 1.5rem; }
+
+  code, kbd, pre {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.875em;
+  }
+  code { background: var(--code-bg); padding: 0.15em 0.4em; border-radius: 4px; }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    overflow-x: auto;          /* long commands scroll here, never the page */
+    margin: 0.75rem 0 0;
+  }
+  pre code { background: none; padding: 0; }
+
+  a { color: var(--accent); }
+
+  /* ---------- header ---------- */
+  header { border-bottom: 1px solid var(--border); }
+  .header-inner {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding-top: 1.25rem; padding-bottom: 1.25rem;
+  }
+  .wordmark { font-size: 1.25rem; font-weight: 640; letter-spacing: -0.01em; }
+  .chip {
+    font-size: 0.75rem; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 0.15rem 0.6rem; white-space: nowrap;
+  }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 4rem 0 2.5rem; }
+  .hero h1 {
+    font-size: clamp(1.9rem, 5vw, 2.75rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    margin: 0 0 1.25rem; max-width: 22ch;
+  }
+  .lede { font-size: 1.0625rem; color: var(--muted); max-width: 62ch; margin: 0 0 1rem; }
+  .lede strong { color: var(--text); font-weight: 600; }
+
+  /* ---------- downloads ---------- */
+  section { padding: 2.5rem 0; }
+  h2 { font-size: 1.125rem; letter-spacing: -0.01em; margin: 0 0 0.35rem; }
+  .section-note { color: var(--muted); font-size: 0.9375rem; margin: 0 0 1.5rem; }
+
+  .cards {
+    display: grid; gap: 0.875rem;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  }
+  .card {
+    display: flex; flex-direction: column; gap: 0.3rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.15rem;
+    text-decoration: none; color: inherit;
+    transition: border-color .12s ease, transform .12s ease;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .card .os { font-weight: 620; font-size: 1rem; }
+  .card .fmt { color: var(--muted); font-size: 0.875rem; }
+  .card .meta { color: var(--muted); font-size: 0.8125rem; margin-top: 0.35rem; }
+
+  /* Set by JS when the UA looks like this platform. Purely a hint — every card
+     stays visible and clickable regardless. */
+  .card.is-suggested { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .card.is-suggested .badge {
+    display: inline-block; align-self: flex-start;
+    background: var(--accent); color: var(--accent-text);
+    font-size: 0.6875rem; font-weight: 640; letter-spacing: 0.02em;
+    text-transform: uppercase;
+    border-radius: 4px; padding: 0.1rem 0.4rem; margin-bottom: 0.15rem;
+  }
+  .badge { display: none; }
+
+  .notice {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    font-size: 0.9375rem;
+    margin-bottom: 1.25rem;
+  }
+
+  /* ---------- install steps ---------- */
+  .steps { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); }
+  .step h3 { font-size: 0.9375rem; margin: 0 0 0.5rem; }
+  .step p, .step ol { margin: 0; color: var(--muted); font-size: 0.9375rem; }
+  .step ol { padding-left: 1.15rem; }
+  .step li { margin-bottom: 0.4rem; }
+  .step strong { color: var(--text); font-weight: 600; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    margin-top: 2rem; padding: 2rem 0 3rem;
+    color: var(--muted); font-size: 0.875rem;
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="wrap header-inner">
+    <span class="wordmark">Shen</span>
+    <!-- Filled in by the GitHub API. Stays hidden if that call fails. -->
+    <span class="chip" id="version-chip" hidden></span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="hero">
+    <h1>A research IDE for scientists.</h1>
+    <p class="lede">
+      <strong>Shen</strong> is a local-first research app — an <em>Integrated Research
+      Environment</em>, the research counterpart to a code IDE. One desktop window, three
+      panels: your bibliography (Zotero), an editor (LaTeX / Python / text), and an AI
+      assistant that answers from your own library.
+    </p>
+    <p class="lede">
+      <strong>The magic moment:</strong> a citation in an answer jumps straight to the exact
+      PDF passage and highlights it, at the right spot on the page.
+    </p>
+  </div>
+
+  <section id="download">
+    <h2>Download</h2>
+    <p class="section-note">Everything runs on your machine — no Docker, no Python, nothing else to install.</p>
+
+    <!-- Revealed by JS only for the platforms we don't ship yet. -->
+    <div class="notice" id="notice-windows" hidden>
+      <strong>Windows isn't ready yet.</strong> Shen currently ships for Linux and Apple
+      Silicon Macs. A Windows build is planned.
+    </div>
+    <div class="notice" id="notice-mobile" hidden>
+      <strong>Shen is a desktop app.</strong> Open this page on your Linux machine or Mac to download it.
+    </div>
+
+    <div class="cards">
+      <a class="card" data-os="linux"
+         href="https://github.com/shen-industries/downloads/releases/latest/download/Shen_amd64.deb">
+        <span class="badge">Your system</span>
+        <span class="os">Linux</span>
+        <span class="fmt">.deb — Debian, Ubuntu, Mint, Pop!_OS</span>
+        <span class="meta">64-bit x86 · <span data-size="deb">~650 MB</span></span>
+      </a>
+
+      <a class="card" data-os="linux"
+         href="https://github.com/shen-industries/downloads/releases/latest/download/Shen_x86_64.rpm">
+        <span class="badge">Your system</span>
+        <span class="os">Linux</span>
+        <span class="fmt">.rpm — Fedora, RHEL, openSUSE</span>
+        <span class="meta">64-bit x86 · <span data-size="rpm">~650 MB</span></span>
+      </a>
+
+      <!-- "Apple Silicon" belongs in the label, not the fine print: we don't build for
+           Intel, and the browser can't reliably tell the two apart. -->
+      <a class="card" data-os="mac"
+         href="https://github.com/shen-industries/downloads/releases/latest/download/Shen_aarch64.dmg">
+        <span class="badge">Your system</span>
+        <span class="os">macOS — Apple Silicon</span>
+        <span class="fmt">.dmg — M1 and later. Not Intel.</span>
+        <span class="meta">arm64 · <span data-size="dmg">~600 MB</span></span>
+      </a>
+    </div>
+  </section>
+
+  <section id="install">
+    <h2>Installing</h2>
+    <p class="section-note">Three steps, whichever system you're on.</p>
+
+    <div class="steps">
+      <div class="step">
+        <h3>1 · Install</h3>
+        <p><strong>Linux</strong> — open the downloaded <code>.deb</code> or <code>.rpm</code>,
+        then launch <strong>Shen</strong> from your applications menu.</p>
+        <p style="margin-top:.75rem"><strong>macOS</strong> — open the <code>.dmg</code> and
+        drag <strong>Shen</strong> into <em>Applications</em>.</p>
+      </div>
+
+      <div class="step">
+        <h3>2 · First launch on macOS</h3>
+        <p>Shen isn't code-signed yet, so macOS blocks the first launch. Open
+        <strong>System Settings → Privacy &amp; Security</strong> and click
+        <strong>Open Anyway</strong>. If that button doesn't appear:</p>
+        <pre><code>xattr -dr com.apple.quarantine /Applications/Shen.app</code></pre>
+      </div>
+
+      <div class="step">
+        <h3>3 · Add your API key</h3>
+        <p>The assistant runs on Claude, so you bring your own key. It's stored in your OS
+        keychain and never leaves your machine.</p>
+        <ol style="margin-top:.75rem">
+          <li>Create one at <a href="https://console.anthropic.com/">console.anthropic.com</a> — it looks like <code>sk-ant-…</code>.</li>
+          <li>In Shen: <strong>gear icon</strong> → paste the key → <strong>Save</strong>.</li>
+          <li>When it reads <strong>Key configured</strong>, you're ready.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section id="feedback">
+    <h2>You're testing this — thank you</h2>
+    <p class="section-note" style="margin-bottom:.75rem">
+      The one thing that helps us most is hearing how it went, good or bad.
+    </p>
+    <p style="margin:0">
+      <a href="https://framaforms.org/retour-de-test-sur-shen-application-pour-la-recherche-agentique-1784832017">Fill in the feedback form →</a>
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Shen — local-first research environment. Your library, your machine, your keys.
+  </div>
+</footer>
+
+<script>
+  // Everything below is enhancement. The download links above are plain hrefs to
+  // /releases/latest/download/<stable name>, so the page works with JS off, with the
+  // GitHub API rate-limited, or with the API down. Nothing here is load-bearing.
+  (function () {
+    var REPO = "shen-industries/downloads";
+
+    // Asset filename -> the data-size slot it fills. These names are the version-less
+    // copies produced by bundle.yml, which is what makes /latest/ permalinks stable.
+    var SIZE_SLOTS = {
+      "Shen_amd64.deb": "deb",
+      "Shen_x86_64.rpm": "rpm",
+      "Shen_aarch64.dmg": "dmg"
+    };
+
+    function humanSize(bytes) {
+      if (!bytes) return null;
+      var mb = bytes / 1e6;
+      return mb >= 1000 ? (mb / 1000).toFixed(2) + " GB" : Math.round(mb) + " MB";
+    }
+
+    // --- platform hint -------------------------------------------------------
+    // Only ever *highlights* a card. Two things are deliberately not attempted:
+    // deb vs rpm (undetectable from a browser) and Apple Silicon vs Intel
+    // (unreliable) — so all three cards always render.
+    var ua = navigator.userAgent;
+    var platform =
+      /Android/.test(ua) ? "mobile" :
+      /iPhone|iPad|iPod/.test(ua) ? "mobile" :
+      /Mac/.test(ua) ? "mac" :
+      /Windows/.test(ua) ? "windows" :
+      /Linux|X11/.test(ua) ? "linux" : null;
+
+    if (platform === "mac" || platform === "linux") {
+      var cards = document.querySelectorAll('.card[data-os="' + platform + '"]');
+      for (var i = 0; i < cards.length; i++) cards[i].classList.add("is-suggested");
+    } else if (platform === "windows") {
+      document.getElementById("notice-windows").hidden = false;
+    } else if (platform === "mobile") {
+      document.getElementById("notice-mobile").hidden = false;
+    }
+
+    // --- live release metadata ----------------------------------------------
+    // Public repo, so this works unauthenticated. Note /releases/latest skips drafts
+    // and prereleases: until a release is *published*, this 404s and we stay silent.
+    fetch("https://api.github.com/repos/" + REPO + "/releases/latest")
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (release) {
+        var chip = document.getElementById("version-chip");
+        var when = new Date(release.published_at).toLocaleDateString(undefined, {
+          year: "numeric", month: "long", day: "numeric"
+        });
+        chip.textContent = release.tag_name + " · " + when;
+        chip.hidden = false;
+
+        (release.assets || []).forEach(function (asset) {
+          var slot = SIZE_SLOTS[asset.name];
+          var size = humanSize(asset.size);
+          if (!slot || !size) return;
+          var el = document.querySelector('[data-size="' + slot + '"]');
+          if (el) el.textContent = size;
+        });
+      })
+      .catch(function () {
+        // No release yet, rate-limited, or offline. The static hrefs and the
+        // approximate sizes already on the page carry it.
+      });
+  })();
+</script>
+
+</body>
+</html>
