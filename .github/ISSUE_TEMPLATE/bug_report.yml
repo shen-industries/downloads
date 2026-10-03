@@ -1,0 +1,45 @@
+name: Bug report
+description: Something in Shen crashed, froze, or did the wrong thing.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Two things make a report usable: the version and the log file.
+        No GitHub account? Use the [feedback form](https://framaforms.org/retour-de-test-sur-shen-application-pour-la-recherche-agentique-1784832017) instead.
+  - type: input
+    id: version
+    attributes:
+      label: Shen version
+      description: In Shen, **Help → About Shen**.
+      placeholder: "0.1.2"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: System
+      options:
+        - Windows
+        - macOS (Apple Silicon)
+        - Linux (.deb)
+        - Linux (.rpm)
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got instead. A screenshot helps.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log file
+      description: |
+        In Shen, **Help → Open Logs Folder**, then drag **Shen.log** into this box.
+        It holds error messages and file paths from your machine; skim it first if that matters to you.
+        Ignore an older `IRE.log` if you see one.
+    validations:
+      required: false
